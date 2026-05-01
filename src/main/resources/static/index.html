@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum API - Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; padding: 20px; }
+        h1 { text-align: center; color: #333; margin-bottom: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .section { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .section h2 { color: #4a90d9; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #4a90d9; }
+        label { display: block; margin-top: 10px; font-weight: bold; color: #555; }
+        input, textarea { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ddd; border-radius: 4px; }
+        textarea { height: 80px; resize: vertical; }
+        button { margin-top: 12px; padding: 8px 20px; background: #4a90d9; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #357abd; }
+        .response { margin-top: 12px; background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 13px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+        .method { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; margin-right: 8px; }
+        .get { background: #61affe; color: white; }
+        .post { background: #49cc90; color: white; }
+        .put { background: #fca130; color: white; }
+        .delete { background: #f93e3e; color: white; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Forum API - Test Interface</h1>
+
+    <div class="section">
+        <h2><span class="method get">GET</span> /api/posts</h2>
+        <button onclick="fetchPosts()">Récupérer tous les posts</button>
+        <div class="response" id="res-posts">...</div>
+    </div>
+
+    <div class="section">
+        <h2><span class="method post">POST</span> /api/posts</h2>
+        <label>Titre</label><input type="text" id="post-titre" placeholder="Mon titre">
+        <label>Contenu</label><textarea id="post-contenu" placeholder="Mon contenu..."></textarea>
+        <label>Auteur</label><input type="text" id="post-auteur" placeholder="Nom de l'auteur">
+        <button onclick="createPost()">Créer le post</button>
+        <div class="response" id="res-create">...</div>
+    </div>
+
+    <div class="section">
+        <h2><span class="method get">GET</span> /api/posts/{id}</h2>
+        <label>ID du post</label><input type="number" id="get-post-id" placeholder="1">
+        <button onclick="fetchPostById()">Récupérer le post</button>
+        <div class="response" id="res-get-by-id">...</div>
+    </div>
+
+    <div class="section">
+        <h2><span class="method put">PUT</span> /api/posts/{id}</h2>
+        <label>ID du post</label><input type="number" id="put-post-id" placeholder="1">
+        <label>Nouveau titre</label><input type="text" id="put-titre" placeholder="Nouveau titre">
+        <label>Nouveau contenu</label><textarea id="put-contenu" placeholder="Nouveau contenu..."></textarea>
+        <label>Nouvel auteur</label><input type="text" id="put-auteur" placeholder="Nom de l'auteur">
+        <button onclick="updatePost()">Mettre à jour</button>
+        <div class="response" id="res-update">...</div>
+    </div>
+
+    <div class="section">
+        <h2><span class="method post">POST</span> /api/commentaires</h2>
+        <label>ID du post</label><input type="number" id="com-post-id" placeholder="1">
+        <label>Contenu</label><textarea id="com-contenu" placeholder="Mon commentaire..."></textarea>
+        <label>Auteur</label><input type="text" id="com-auteur" placeholder="Nom de l'auteur">
+        <button onclick="createCommentaire()">Créer le commentaire</button>
+        <div class="response" id="res-create-com">...</div>
+    </div>
+
+    <div class="section">
+        <h2><span class="method get">GET</span> /api/commentaires/post/{postId}</h2>
+        <label>ID du post</label><input type="number" id="com-get-post-id" placeholder="1">
+        <button onclick="fetchCommentaires()">Récupérer les commentaires</button>
+        <div class="response" id="res-com">...</div>
+    </div>
+</div>
+
+<script>
+const API = 'http://localhost:8083/api';
+
+function show(id, data) {
+    document.getElementById(id).textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+}
+
+async function fetch(url, method = 'GET', body = null) {
+    try {
+        const opts = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(url, opts);
+        if (res.status === 204) return 'Supprimé avec succès (204)';
+        return await res.json();
+    } catch (e) { show('res', e.message); }
+}
+
+async function fetchPosts() {
+    const res = await fetch(API + '/posts');
+    show('res-posts', res);
+}
+
+async function createPost() {
+    const body = { titre: document.getElementById('post-titre').value, contenu: document.getElementById('post-contenu').value, auteur: document.getElementById('post-auteur').value };
+    const res = await fetch(API + '/posts', 'POST', body);
+    show('res-create', res);
+}
+
+async function fetchPostById() {
+    const id = document.getElementById('get-post-id').value;
+    const res = await fetch(API + '/posts/' + id);
+    show('res-get-by-id', res);
+}
+
+async function updatePost() {
+    const id = document.getElementById('put-post-id').value;
+    const body = { titre: document.getElementById('put-titre').value, contenu: document.getElementById('put-contenu').value, auteur: document.getElementById('put-auteur').value };
+    const res = await fetch(API + '/posts/' + id, 'PUT', body);
+    show('res-update', res);
+}
+
+async function createCommentaire() {
+    const postId = document.getElementById('com-post-id').value;
+    const body = { contenu: document.getElementById('com-contenu').value, auteur: document.getElementById('com-auteur').value, post: { id: parseInt(postId) } };
+    const res = await fetch(API + '/commentaires', 'POST', body);
+    show('res-create-com', res);
+}
+
+async function fetchCommentaires() {
+    const postId = document.getElementById('com-get-post-id').value;
+    const res = await fetch(API + '/commentaires/post/' + postId);
+    show('res-com', res);
+}
+</script>
+</body>
+</html>
