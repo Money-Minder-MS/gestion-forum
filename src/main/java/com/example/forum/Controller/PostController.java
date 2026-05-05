@@ -2,6 +2,8 @@ package com.example.forum.Controller;
 
 import com.example.forum.Model.Post;
 import com.example.forum.Service.PostService;
+import com.example.forum.UserClient;
+import com.example.forum.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,8 @@ public class PostController {
 
     @Autowired
     private PostService postService;
+    @Autowired
+    private UserClient userClient;
 
     @GetMapping
     public ResponseEntity<List<Post>> getAllPosts() {
@@ -40,5 +44,10 @@ public class PostController {
     public ResponseEntity<Void> deletePost(@PathVariable Long id) {
         postService.deletePost(id);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/User/{id}")
+    public ResponseEntity<UserDTO> getPostByUserId(@PathVariable Long id) {
+        UserDTO userDTO = userClient.getUserById(id);
+        return ResponseEntity.ok(userDTO);
     }
 }
