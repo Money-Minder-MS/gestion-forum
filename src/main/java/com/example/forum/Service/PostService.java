@@ -1,15 +1,20 @@
 package com.example.forum.Service;
 
 import com.example.forum.Model.Post;
+import com.example.forum.NotificationPublisher;
+import com.example.forum.RabbitMQConfig;
 import com.example.forum.Repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class PostService {
-
+    @Autowired
+    private NotificationPublisher notificationPublisher;
     @Autowired
     private PostRepository postRepository;
 
@@ -23,7 +28,20 @@ public class PostService {
     }
 
     public Post createPost(Post post) {
-        return postRepository.save(post);
+        Post saved = postRepository.save(post);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("titre",  saved.getTitre());
+        data.put("auteur", saved.getAuteur());
+
+        notificationPublisher.publier(
+                RabbitMQConfig.KEY_POST,
+                saved.getUserId(),
+                "Nouveau post publié : " + saved.getTitre(),
+                data
+        );
+
+        return saved;
     }
 
     public Post updatePost(Long id, Post postDetails) {
